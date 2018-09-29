@@ -1,0 +1,258 @@
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title></title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="googlebot" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="./css/index.css">
+    <script type="text/javascript" src="./lib/vue.js"></script>
+
+</head>
+
+<body>
+    <section class="todoapp">
+        <header class="header">
+            <h1>任务清单</h1>
+            <input v-autofocus autofocus="autofocus" autocomplete="off" placeholder="想干啥?" class="new-todo"
+                @keyup.enter="addTodo" v-model.trim="inputValue">
+        </header>
+        <section class="main">
+            <input type="checkbox" class="toggle-all" @change="allSelect" v-model="isCheckAll">
+            <ul class="todo-list">
+
+                <li class="todo " :class="{completed:item.isCompleted,editing:item.isEditing}" v-for="(item, index) in filterArr">
+                    <div class="view">
+                        <input type="checkbox" class="toggle" v-model="item.isCompleted" @change="isSelect">
+                        <label @dblclick="editing(index)">{{item.content}}</label>
+                        <button class="destroy" @click="delCurrent(index)"></button>
+                    </div>
+                    <input v-focus type="text" class="edit" v-model="item.content" @keyup.enter="saveEdit(index)" @blur="saveEdit(index)">
+                </li>
+                <!-- <li class="todo completed"> 
+                    <div class="view">
+                        <input type="checkbox" class="toggle">
+                        <label></label>
+                        <button class="destroy"></button>
+                    </div>
+                    <input type="text" class="edit">
+                </li> -->
+                <!-- <li class="todo editing">
+                        <div class="view">
+                            <input type="checkbox" class="toggle">
+                            <label>21</label>
+                            <button class="destroy"></button>
+                        </div>
+                        <input type="text" class="edit">
+                    </li> -->
+            </ul>
+        </section>
+        <footer class="footer">
+            <span class="todo-count">
+                <strong>{{unfinishedNum}}</strong> 项剩余
+            </span>
+            <ul class="filters">
+                <!-- 当filter是all的时候被选中 -->
+                <li>
+                    <a href="#/all" @click="changeFilter('all')" :class="{selected:filter=='all'}">全部</a>
+                </li>
+                <li>
+                       <!-- 当filter是active的时候被选中 -->
+                    <a href="#/active" @click="changeFilter('active')" :class="{selected:filter=='active'}">未完成</a>
+                </li>
+                <li>
+                              <!-- 当filter是completed的时候被选中 -->
+                    <a href="#/completed" @click="changeFilter('completed')" :class="{selected:filter=='completed'}">完成</a>
+                </li>
+            </ul>
+            <button class="clear-completed" @click="clear">
+                清空列表
+            </button>
+        </footer>
+    </section>
+    <footer class="info">
+        <p>双击进入编辑状态</p>
+        <p>鸣谢:
+            <a href="http://evanyou.me">Evan You</a>
+        </p>
+        <p>参考于
+            <a href="http://todomvc.com">TodoMVC</a>
+        </p>
+    </footer>
+
+
+    <script src="lib/vue.js"></script>
+</body>
+
+</html>
+<script>
+    // 注册一个全局自定义指令 `v-focus`
+    Vue.directive('focus', {
+        //   // 当被绑定的元素插入到 DOM 中时……
+        //   inserted: function (el) {
+        //     // 聚焦元素
+        //     el.focus()
+        //   },
+        update: function (el) {
+            // 聚焦元素
+            el.focus()
+        }
+    })
+    Vue.directive('autofocus', {
+        // 当被绑定的元素插入到 DOM 中时……
+        inserted: function (el) {
+            // 聚焦元素
+            el.focus()
+        },
+    })
+
+
+// json.stringfy()将对象、数组转换成字符串；json.parse()将字符串转成json对象。
+
+// 打开浏览器,第一步就已经读取了事件
+let todoList=JSON.parse(window.localStorage.getItem('todo22'))||[];
+console.log(todoList);
+
+    // 浏览器关闭时,注册页面关闭事件
+    //存储前先用JSON.stringify()方法将json对象转换成字符串形式
+window.onunload=function(){
+
+   window.localStorage.setItem('todo22',JSON.stringify(todoList));
+   
+}
+
+
+    let app = new Vue({
+        el: '.todoapp',
+        data: {
+            inputValue: '',
+            todoList,
+            filter:'all',
+            isCheckAll:false
+        },
+        methods: {
+            addTodo() {
+                if (this.inputValue == '') {
+                    alert('写点啥呗');
+                    return;
+                }
+                this.todoList.push({
+                    content: this.inputValue,
+                    isCompleted: false,
+                    isEditing: false,
+                      
+
+                })
+                this.inputValue = '';
+            },
+            delCurrent(index) {
+                if (confirm("你真的要删除吗?") == true) {
+                    this.todoList.splice(index, 1);
+                }
+            },
+            clear() {
+                if (confirm("你要全部清空吗???") == true) {
+                    this.todoList = [];
+                }
+            },
+            editing(index) {
+                this.todoList.forEach(v => {
+                    v.isEditing = false;
+                })
+                this.todoList[index].isEditing = true;
+
+            },
+            saveEdit(index) {
+                this.todoList[index].isEditing = false;
+            },
+            changeFilter(value){
+              
+        // console.log(value);
+             this.filter=value;       
+      
+            },allSelect(){
+                this.todoList.forEach(v=>{
+                    v.isCompleted=this.isCheckAll;
+                })
+            },isSelect(){
+                
+                let wancheng=0;
+                this.todoList.forEach(v=>{
+                    //如果被选中
+                    if(v.isCompleted==true){
+                      wancheng++;
+                    }
+                })
+                if(this.todoList.length==wancheng){
+                    this.isCheckAll=true;
+                }else{
+                    this.isCheckAll=false;
+                }
+            }
+
+        },
+        //对于任何复杂逻辑，你都应当使用计算属性。
+        computed: {
+            unfinishedNum() {
+                let num = 0;
+                this.todoList.forEach((v, i, arr) => {
+                    if (v.isCompleted == false) {
+                        num++;
+                    }
+                    //    console.log(num); 
+                })
+                return num;
+            },
+            
+            filterArr(){
+                if(this.filter=="all"){
+                    return this.todoList;
+                }else if(this.filter=="active"){
+                    let temArr=[];
+                    this.todoList.forEach(v=>{
+                        if(v.isCompleted==false){
+                            temArr.push(v);
+                        }
+                    })
+                    return temArr;
+                }else{
+                    let temArr=[];
+                    this.todoList.forEach(v=>{
+                        if(v.isCompleted==true){
+                            temArr.push(v);
+                        }
+                    })
+                    return temArr;
+                }
+            }
+        }
+
+    })
+</script>
+
+
+<!-- 需求8 点击切换筛选的高亮状态
+增删  selected 这个类名即可
+为了动态切换样式 增加一个标记字段 用来 标示 当前筛选的是哪一类 -->
+
+<!-- 需求9 根据切换的筛选条件 改变现实的内容
+默认循环的是总数组 
+改为不循环总数组 而是循环 计算属性 计算属性根据当前的筛选条件 返回不一样的内容 -->
+
+<!-- 需求10 全选 反选
+点击顶部的checkbox  使用change事件
+让底部的checkbox的选中状态 跟自己一样
+让 数组中的 每一个 iscompleted 跟自己一样 -->
+
+<!-- 需求11 每一项的 选中状态改变时 判断总个数 跟  选中个数 是否一致 
+一致 勾选顶部
+不一致 取消顶部勾选 -->
+
+<!-- 需求12
+页面打开的时候 
+    读取缓存数据 有 使用 没有 空数组
+页面关闭的时候
+    保存数据 -->
